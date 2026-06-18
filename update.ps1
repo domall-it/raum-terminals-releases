@@ -19,7 +19,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$GITHUB_REPO = "PLACEHOLDER_ORG/raum-terminals-releases"
+$GITHUB_REPO = "domall-it/raum-terminals-releases"
 $SERVICE_NAME = "raum-terminals"
 $EXE_NAME     = "raum-terminals.exe"
 $exePath      = Join-Path $InstallDir $EXE_NAME
