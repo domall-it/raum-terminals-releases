@@ -57,6 +57,12 @@ if ($LicenseFile -ne "" -and (Test-Path $LicenseFile)) {
 Write-Host "[5/5] Windows-Dienst wird registriert..." -ForegroundColor Yellow
 $svcExists = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
 if ($svcExists) {
+    if ($svcExists.Status -eq "Running") {
+        Stop-Service -Name $SERVICE_NAME -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+    }
+    taskkill /F /IM $EXE_NAME /T 2>$null | Out-Null
+    Start-Sleep -Seconds 2
     & "$exePath" uninstall 2>&1 | Out-Null
     Start-Sleep -Seconds 1
 }
