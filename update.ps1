@@ -42,14 +42,15 @@ Write-Host "[2/4] Dienst wird gestoppt..." -ForegroundColor Yellow
 $svc = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -eq "Running") {
     Stop-Service -Name $SERVICE_NAME -Force
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 5
 }
 
 Write-Host "[3/4] Neue Version wird heruntergeladen..." -ForegroundColor Yellow
 $tmpPath = "$exePath.new"
 Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmpPath -UseBasicParsing
 Copy-Item -Path $exePath -Destination "$exePath.bak" -Force
-Move-Item -Path $tmpPath -Destination $exePath -Force
+Remove-Item -Path $exePath -Force
+Move-Item -Path $tmpPath -Destination $exePath
 Write-Host "    $newVersion installiert." -ForegroundColor Green
 
 Write-Host "[4/4] Dienst wird gestartet..." -ForegroundColor Yellow
