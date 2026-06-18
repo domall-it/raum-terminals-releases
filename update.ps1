@@ -42,8 +42,11 @@ Write-Host "[2/4] Dienst wird gestoppt..." -ForegroundColor Yellow
 $svc = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -eq "Running") {
     Stop-Service -Name $SERVICE_NAME -Force
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 3
 }
+# Prozess erzwungen beenden falls noch laufend (Datei-Lock vermeiden)
+taskkill /F /IM $EXE_NAME /T 2>$null | Out-Null
+Start-Sleep -Seconds 2
 
 Write-Host "[3/4] Neue Version wird heruntergeladen..." -ForegroundColor Yellow
 $tmpPath = "$exePath.new"
