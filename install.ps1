@@ -61,7 +61,7 @@ if ($svcExists) {
         Stop-Service -Name $SERVICE_NAME -Force -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 3
     }
-    taskkill /F /IM $EXE_NAME /T 2>$null | Out-Null
+    $null = & taskkill /F /IM $EXE_NAME /T 2>&1
     Start-Sleep -Seconds 2
     & "$exePath" uninstall 2>&1 | Out-Null
     Start-Sleep -Seconds 1

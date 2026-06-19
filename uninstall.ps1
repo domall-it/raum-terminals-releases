@@ -30,7 +30,7 @@ if ($svc) {
 
 # 2. Prozess hart beenden (falls noch laufend)
 Write-Host "[2/4] Prozess wird beendet..." -ForegroundColor Yellow
-taskkill /IM $EXE_NAME /F /T 2>$null | Out-Null
+$null = & taskkill /IM $EXE_NAME /F /T 2>&1
 
 # 3. Dienst aus SCM entfernen
 $svc = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue

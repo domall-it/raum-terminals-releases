@@ -45,7 +45,7 @@ if ($svc -and $svc.Status -eq "Running") {
     Start-Sleep -Seconds 3
 }
 # Prozess erzwungen beenden falls noch laufend (Datei-Lock vermeiden)
-taskkill /F /IM $EXE_NAME /T 2>$null | Out-Null
+$null = & taskkill /F /IM $EXE_NAME /T 2>&1
 Start-Sleep -Seconds 2
 
 Write-Host "[3/4] Neue Version wird heruntergeladen..." -ForegroundColor Yellow
