@@ -117,6 +117,31 @@ raum-terminals.exe run        # Im Vordergrund starten (Debugging)
 
 ---
 
+## Testversion
+
+Raum-Terminals kann **30 Tage kostenlos** mit vollem Funktionsumfang getestet werden.
+
+| | Testversion | Vollversion |
+|---|---|---|
+| Laufzeit | 30 Tage | Unbegrenzt (jährliche Lizenz) |
+| Geräte | 1 TRMNL e1001 | Je nach Lizenzpaket |
+| Räume | Unbegrenzt | Unbegrenzt |
+| Funktionen | Vollständig | Vollständig |
+| Support | E-Mail | E-Mail |
+
+Die Testlizenz wird als `.lic`-Datei bereitgestellt und beim Start mitgegeben:
+
+```powershell
+.\install.ps1 -LicenseFile "C:\Downloads\testlizenz.lic"
+```
+
+Im Dashboard erscheint ein Hinweis mit der verbleibenden Testlaufzeit.  
+**Nach Ablauf der Testphase werden alle Geräte automatisch gesperrt** — eine Verlängerung ist jederzeit möglich.
+
+Testlizenz anfordern: [kontakt@raum-terminal.de](mailto:kontakt@raum-terminal.de)
+
+---
+
 ## Lizenz
 
 Eine abgelaufene oder fehlende Lizenz sperrt alle Geräte vollständig.  
