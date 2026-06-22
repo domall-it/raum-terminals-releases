@@ -20,11 +20,13 @@ Aktuelle Version: **v1.2.22**
 
 ```powershell
 # Mit mitgelieferter Lizenzdatei:
-.\install.ps1 -LicenseFile "C:\Downloads\IhreFirma.lic"
+powershell.exe -ExecutionPolicy Bypass -File .\install.ps1 -LicenseFile "C:\Downloads\IhreFirma.lic"
 
 # Ohne Lizenzdatei (Lizenz kann später kopiert werden):
-.\install.ps1
+powershell.exe -ExecutionPolicy Bypass -File .\install.ps1
 ```
+
+> **Hinweis:** Der Parameter `-ExecutionPolicy Bypass` ist notwendig, da Windows standardmäßig die Ausführung von PowerShell-Skripten blockiert. Der Bypass gilt nur für diesen einen Aufruf und ändert keine systemweiten Einstellungen.
 
 Nach der Installation ist das Dashboard erreichbar unter:  
 **http://localhost:2300**
@@ -37,10 +39,10 @@ Standard-Login: `admin` / `admin` — **bitte sofort ändern!**
 
 ```powershell
 # Auf neueste Version aktualisieren:
-.\update.ps1
+powershell.exe -ExecutionPolicy Bypass -File .\update.ps1
 
 # Auf bestimmte Version aktualisieren:
-.\update.ps1 -Version "v1.2.22"
+powershell.exe -ExecutionPolicy Bypass -File .\update.ps1 -Version "v1.2.22"
 ```
 
 Das Update stoppt den Dienst, tauscht die Binary und startet neu.  
