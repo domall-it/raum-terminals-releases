@@ -9,7 +9,7 @@ Aktuelle Version: **v1.2.22**
 
 - Windows 10 / Windows Server 2016 oder neuer (64-bit)
 - Microsoft Exchange 2016+ mit EWS-Zugang
-- TRMNL E-Ink Displays (BYOS-Modus)
+- TRMNL e1001 E-Ink Display (BYOS-Modus)
 - Netzwerkzugang vom Display-Gerät zum Server
 
 ---
@@ -60,7 +60,7 @@ Bei Fehler wird automatisch ein Rollback auf die vorherige Version durchgeführt
 1. Dashboard öffnen: **http://localhost:2300**
 2. **Einstellungen → Kalender**: Exchange/EWS-Zugangsdaten eingeben und testen
 3. **Räume**: Räume anlegen, Exchange-Mailbox zuweisen
-4. **Geräte**: TRMNL-Gerät flashen (BYOS-Firmware: https://trmnl.com/flash), Server-URL eintragen
+4. **Geräte**: TRMNL e1001 flashen (BYOS-Firmware: https://trmnl.com/flash), Server-URL eintragen
 5. **Geräte**: Registriertes Gerät einem Raum zuweisen
 
 ---
@@ -71,7 +71,7 @@ Bei Fehler wird automatisch ein Rollback auf die vorherige Version durchgeführt
 |---|---|
 | **Kalender** | Exchange EWS — automatische Synchronisierung der Raumbelegung |
 | **Räume** | Beliebig viele Räume, Standorte und Gruppen |
-| **Geräte** | TRMNL BYOS-Protokoll, Akku-Anzeige, WLAN-Signal, Firmware |
+| **Geräte** | TRMNL e1001 (BYOS-Protokoll), Akku-Anzeige, WLAN-Signal, Firmware |
 | **Energiesparen** | Dynamische Abrufintervalle je nach Raumstatus, Bürozeiten, Tiefschlaf |
 | **Buchungsportal** | Spontanbuchung direkt am Gerät (QR-Code), Personensuche im Adressbuch |
 | **Lizenzverwaltung** | Ed25519-signierte Lizenzen, Anzeige verbleibender Laufzeit |
@@ -108,9 +108,9 @@ raum-terminals.exe run        # Im Vordergrund starten (Debugging)
 
 ---
 
-## Gerät flashen (TRMNL BYOS)
+## Gerät flashen (TRMNL e1001)
 
-1. TRMNL-Gerät unter **https://trmnl.com/flash** mit der aktuellen Firmware flashen
+1. TRMNL e1001 unter **https://trmnl.com/flash** mit der aktuellen BYOS-Firmware flashen
 2. Gerät mit WLAN verbinden
 3. Im Gerät-Setup als Server-URL eintragen: `http://<Server-IP>:2300`
 4. Das Gerät registriert sich automatisch und erscheint unter **Geräte** im Dashboard
