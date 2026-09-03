@@ -1,14 +1,17 @@
 # Raum-Terminals
 
-**E-Ink Raumbuchungssystem für Microsoft Exchange**  
-Aktuelle Version: **v1.2.22**
+**E-Ink Raumbuchungssystem für Microsoft 365 und Exchange**  
+Aktuelle Version: **v1.3.1**
 
 ---
 
 ## Systemvoraussetzungen
 
 - Windows 10 / Windows Server 2016 oder neuer (64-bit)
-- Microsoft Exchange 2016+ mit EWS-Zugang
+- Kalender-Anbindung, eines der folgenden:
+  - **Exchange Online / Microsoft 365** über die Microsoft Graph API (App-Registrierung in Microsoft Entra, keine Zusatzlizenz erforderlich)
+  - **Exchange on-premises** 2016 oder neuer mit EWS-Zugang
+- Raumpostfächer (Room Mailboxes) für die anzuzeigenden Räume
 - TRMNL e1001 E-Ink Display (BYOS-Modus)
 - Netzwerkzugang vom Display-Gerät zum Server
 
@@ -22,7 +25,7 @@ Aktuelle Version: **v1.2.22**
 # Mit mitgelieferter Lizenzdatei:
 powershell.exe -ExecutionPolicy Bypass -File .\install.ps1 -LicenseFile "C:\Downloads\IhreFirma.lic"
 
-# Ohne Lizenzdatei (Lizenz kann später kopiert werden):
+# Ohne Lizenzdatei (30-Tage-Testlizenz wird automatisch erzeugt):
 powershell.exe -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
@@ -31,7 +34,7 @@ powershell.exe -ExecutionPolicy Bypass -File .\install.ps1
 Nach der Installation ist das Dashboard erreichbar unter:  
 **http://localhost:2300**
 
-Standard-Login: `admin` / `admin` — **bitte sofort ändern!**
+Standard-Login: `admin` / `admin`, **bitte sofort ändern!**
 
 ---
 
@@ -42,28 +45,34 @@ Standard-Login: `admin` / `admin` — **bitte sofort ändern!**
 powershell.exe -ExecutionPolicy Bypass -File .\update.ps1
 
 # Auf bestimmte Version aktualisieren:
-powershell.exe -ExecutionPolicy Bypass -File .\update.ps1 -Version "v1.2.22"
+powershell.exe -ExecutionPolicy Bypass -File .\update.ps1 -Version "v1.3.1"
 ```
 
 Das Update stoppt den Dienst, tauscht die Binary und startet neu.  
 Bei Fehler wird automatisch ein Rollback auf die vorherige Version durchgeführt.
 
+> **Hinweis:** Nach einem Update kann eine erneute Anmeldung im Dashboard nötig sein. Datenbank und Lizenzdatei bleiben erhalten.
+
 ### Manuelles Update
 
 1. Neue `raum-terminals.exe` aus dem [neuesten Release](../../releases/latest) herunterladen
-2. `sc stop raum-terminals` — Dienst stoppen
+2. `sc stop raum-terminals` (Dienst stoppen)
 3. Alte `C:\raum-terminals\raum-terminals.exe` ersetzen
-4. `sc start raum-terminals` — Dienst starten
+4. `sc start raum-terminals` (Dienst starten)
 
 ---
 
 ## Ersteinrichtung
 
 1. Dashboard öffnen: **http://localhost:2300**
-2. **Einstellungen → Kalender**: Exchange/EWS-Zugangsdaten eingeben und testen
-3. **Räume**: Räume anlegen, Exchange-Mailbox zuweisen
+2. **Einstellungen → Kalender**: Anbieter hinzufügen und Verbindung testen
+   - *Exchange Online / Microsoft 365*: Tenant-ID, Client-ID und Client-Secret der App-Registrierung
+   - *Exchange on-premises*: EWS-URL, Dienstkonto und Passwort
+3. **Räume**: Räume über die Erkennung importieren oder manuell mit Postfachadresse anlegen
 4. **Geräte**: TRMNL e1001 flashen (BYOS-Firmware: https://trmnl.com/flash), Server-URL eintragen
 5. **Geräte**: Registriertes Gerät einem Raum zuweisen
+
+Die vollständige Anleitung zur Einrichtung in Microsoft Entra (App-Registrierung, Anwendungsberechtigungen, Administratorzustimmung) steht im Handbuch direkt im Dashboard.
 
 ---
 
@@ -71,15 +80,15 @@ Bei Fehler wird automatisch ein Rollback auf die vorherige Version durchgeführt
 
 | Bereich | Funktion |
 |---|---|
-| **Kalender** | Exchange EWS — automatische Synchronisierung der Raumbelegung |
-| **Räume** | Beliebig viele Räume, Standorte und Gruppen |
+| **Kalender** | Exchange Online über Graph API und Exchange on-premises über EWS, automatische Synchronisierung der Raumbelegung |
+| **Räume** | Beliebig viele Räume, Standorte und Gruppen, gemischter Betrieb mehrerer Anbieter |
 | **Geräte** | TRMNL e1001 (BYOS-Protokoll), Akku-Anzeige, WLAN-Signal, Firmware |
 | **Energiesparen** | Dynamische Abrufintervalle je nach Raumstatus, Bürozeiten, Tiefschlaf |
 | **Buchungsportal** | Spontanbuchung direkt am Gerät (QR-Code), Personensuche im Adressbuch |
 | **Lizenzverwaltung** | Ed25519-signierte Lizenzen, Anzeige verbleibender Laufzeit |
 | **Benutzerverwaltung** | Mehrere Admin-Benutzer, Passwort-Änderung |
 | **Backend-Logs** | Live-Log mit Textfilter (Filter: `INFO`, `WARN`, `DBUG`, `ERROR`) |
-| **Handbuch** | Vollständige Anleitung direkt im Dashboard |
+| **Handbuch** | Vollständige Anleitung direkt im Dashboard, deutsch und englisch |
 
 ---
 
@@ -121,33 +130,28 @@ raum-terminals.exe run        # Im Vordergrund starten (Debugging)
 
 ## Testversion
 
-Raum-Terminals kann **30 Tage kostenlos** mit vollem Funktionsumfang getestet werden.
+Raum-Terminals kann **30 Tage kostenlos** mit vollem Funktionsumfang getestet werden. Die Testlizenz wird beim ersten Start automatisch erzeugt, eine Anforderung ist nicht nötig.
 
 | | Testversion | Vollversion |
 |---|---|---|
-| Laufzeit | 30 Tage | Unbegrenzt (jährliche Lizenz) |
-| Geräte | 1 TRMNL e1001 | Je nach Lizenzpaket |
+| Laufzeit | 30 Tage | Unbefristet (Kauflizenz) |
+| Geräte | 1 TRMNL e1001 | Je nach Anzahl der Gerätelizenzen |
 | Räume | Unbegrenzt | Unbegrenzt |
 | Funktionen | Vollständig | Vollständig |
-| Support | E-Mail | E-Mail |
-
-Die Testlizenz wird als `.lic`-Datei bereitgestellt und beim Start mitgegeben:
-
-```powershell
-.\install.ps1 -LicenseFile "C:\Downloads\testlizenz.lic"
-```
+| Updates | Enthalten | Über optionale Software-Wartung |
 
 Im Dashboard erscheint ein Hinweis mit der verbleibenden Testlaufzeit.  
-**Nach Ablauf der Testphase werden alle Geräte automatisch gesperrt** — eine Verlängerung ist jederzeit möglich.
-
-Testlizenz anfordern: [kontakt@raum-terminal.de](mailto:kontakt@raum-terminal.de)
+**Nach Ablauf der Testphase werden alle Geräte gesperrt.** Das Dashboard bleibt erreichbar, sodass eine Lizenz jederzeit eingespielt werden kann.
 
 ---
 
 ## Lizenz
 
-Eine abgelaufene oder fehlende Lizenz sperrt alle Geräte vollständig.  
-Zur Lizenzverlängerung oder für neue Lizenzen:
+Die Gerätelizenzen sind Kauflizenzen und unbefristet gültig, ein Abonnement ist nicht erforderlich. Programmaktualisierungen können über eine optionale Software-Wartung bezogen werden.
+
+Eine fehlende oder abgelaufene Lizenz (etwa nach Ende der Testphase) sperrt die Geräte, bis eine gültige Lizenz eingespielt wird.
+
+Für Lizenzen und Wartung:
 
 - E-Mail: [kontakt@raum-terminal.de](mailto:kontakt@raum-terminal.de)
 - Web: [www.raum-terminals.de](https://www.raum-terminals.de)
