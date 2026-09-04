@@ -109,7 +109,8 @@ if ($RemoveData) {
     # Ausdruecklich verlangt: Datenbank und Lizenz werden geloescht.
     Write-Host ""
     Write-Host "    -RemoveData ist gesetzt: Datenbank und Lizenz werden geloescht." -ForegroundColor Yellow
-    $confirm = Read-Host "    Wirklich alle Daten in $dataBase loeschen? Das ist nicht umkehrbar. [j/N]"
+    Write-Host "    Betroffen sind: $dataBase\data und $dataBase\license.lic" -ForegroundColor Gray
+    $confirm = Read-Host "    Wirklich loeschen? Das ist nicht umkehrbar. (j = loeschen, ENTER = behalten)"
     if ($confirm -eq "j" -or $confirm -eq "J") {
         foreach ($item in @((Join-Path $dataBase "data"), (Join-Path $dataBase "license.lic"))) {
             if (Test-Path $item) { Remove-Item -Path $item -Recurse -Force -ErrorAction SilentlyContinue }

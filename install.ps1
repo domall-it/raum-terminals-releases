@@ -59,9 +59,16 @@ if ($InstallDir -eq "") {
     if ($existingDir -ne "") {
         $suggestion = $existingDir
         Write-Host "Bestehende Installation gefunden: $existingDir" -ForegroundColor Gray
+        Write-Host ""
     }
-    $answer = Read-Host "Installationsverzeichnis [$suggestion]"
+    Write-Host "Wohin soll das Programm installiert werden?" -ForegroundColor White
+    Write-Host "  Vorgabe: $suggestion" -ForegroundColor Cyan
+    Write-Host "  Zum Uebernehmen einfach ENTER druecken," -ForegroundColor Gray
+    Write-Host "  oder einen anderen Pfad eingeben." -ForegroundColor Gray
+    Write-Host ""
+    $answer = Read-Host "Pfad (ENTER = Vorgabe)"
     if ($answer.Trim() -eq "") { $InstallDir = $suggestion } else { $InstallDir = $answer.Trim() }
+    Write-Host "  Gewaehlt: $InstallDir" -ForegroundColor Green
 }
 
 # Zeigt der Dienst woanders hin, muss das geklaert werden: sonst laeuft die
@@ -72,9 +79,9 @@ if ($existingDir -ne "" -and $existingDir -ne $InstallDir) {
     Write-Host "Bei Installation nach $InstallDir wird der Dienst dorthin umgestellt." -ForegroundColor Yellow
     Write-Host "Liegt Ihre bisherige Datenbank in $existingDir\data, bleibt sie dort" -ForegroundColor Yellow
     Write-Host "liegen und wird nicht mehr verwendet." -ForegroundColor Yellow
-    $go = Read-Host "Trotzdem fortfahren? [j/N]"
+    $go = Read-Host "Trotzdem fortfahren? (j = ja, ENTER = abbrechen)"
     if ($go -ne "j" -and $go -ne "J") {
-        Write-Host "Abgebrochen." -ForegroundColor Gray
+        Write-Host "Abgebrochen, es wurde nichts geaendert." -ForegroundColor Gray
         exit 0
     }
 }
