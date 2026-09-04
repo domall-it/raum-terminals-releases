@@ -1,7 +1,8 @@
 # Raum-Terminals
 
-**E-Ink Raumbuchungssystem für Microsoft 365 und Exchange**  
-Aktuelle Version: **v1.4.0**
+**E-Ink Raumbuchungssystem für Microsoft 365 und Exchange**
+
+[![Aktuelle Version](https://img.shields.io/github/v/release/domall-it/raum-terminals-releases?label=Aktuelle%20Version&color=1586d8)](../../releases/latest)
 
 ---
 
