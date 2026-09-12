@@ -16,6 +16,8 @@
 param(
     [string]$InstallDir = "",
     [string]$LicenseFile = "",
+    [int]$HttpPort = 2300,
+    [int]$HttpsPort = 2443,
     [switch]$SkipFirewall
 )
 
@@ -24,7 +26,6 @@ $ErrorActionPreference = "Stop"
 $GITHUB_REPO  = "domall-it/raum-terminals-releases"
 $SERVICE_NAME = "RaumTerminals"
 $EXE_NAME     = "raum-terminals.exe"
-$HTTP_PORT    = 2300
 $REG_UNINST   = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RaumTerminals"
 
 # Programm und Daten liegen getrennt: In Program Files darf ein Dienst nicht
@@ -186,24 +187,43 @@ if ($LicenseFile -ne "" -and (Test-Path $LicenseFile)) {
 # scheitern Erstinstallationen am haeufigsten.
 if ($SkipFirewall) {
     Write-Host "[6/7] Firewall wird uebersprungen (-SkipFirewall)." -ForegroundColor Gray
-    Write-Host "    Bitte Port $HTTP_PORT eingehend selbst freigeben." -ForegroundColor Yellow
+    Write-Host "    Bitte Port $HttpPort eingehend selbst freigeben." -ForegroundColor Yellow
 } else {
-    Write-Host "[6/7] Firewall-Regel wird geprueft..." -ForegroundColor Yellow
-    $ruleName = "Raum-Terminals (HTTP $HTTP_PORT)"
-    $existingRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
-    if ($existingRule) {
-        Write-Host "    Regel besteht bereits." -ForegroundColor Gray
-    } else {
+    Write-Host "[6/7] Firewall-Regeln werden geprueft..." -ForegroundColor Yellow
+
+    # Auch das oeffentliche Profil. Windows stuft ein unbekanntes Netz von
+    # sich aus als oeffentlich ein, und in genau dem Netz stehen die Displays.
+    # Fehlt das Profil, ist der Server fuer sie nicht erreichbar, und die
+    # uebliche Reaktion darauf ist, die Firewall ganz abzuschalten. Das ist
+    # deutlich schlechter als ein freigegebener Port.
+    $fwProfil = "Domain,Private,Public"
+
+    foreach ($regel in @(
+        @{ Zweck = "HTTP";  Port = $HttpPort },
+        @{ Zweck = "HTTPS"; Port = $HttpsPort }
+    )) {
+        $ruleName = "Raum-Terminals ($($regel.Zweck) $($regel.Port))"
+        $vorhanden = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+        if ($vorhanden) {
+            Write-Host "    $ruleName besteht bereits." -ForegroundColor Gray
+            continue
+        }
         try {
             New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Action Allow `
-                -Protocol TCP -LocalPort $HTTP_PORT -Profile Domain,Private | Out-Null
-            Write-Host "    Angelegt: TCP $HTTP_PORT eingehend (Domaene und privates Netz)." -ForegroundColor Green
+                -Protocol TCP -LocalPort $regel.Port -Profile $fwProfil | Out-Null
+            Write-Host "    Angelegt: TCP $($regel.Port) eingehend, alle drei Profile." -ForegroundColor Green
         } catch {
-            Write-Host "    WARNUNG: Regel nicht angelegt: $($_.Exception.Message)" -ForegroundColor Yellow
-            Write-Host "    Bitte Port $HTTP_PORT eingehend selbst freigeben." -ForegroundColor Yellow
+            Write-Host "    WARNUNG: $ruleName nicht angelegt: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "    Bitte Port $($regel.Port) eingehend selbst freigeben." -ForegroundColor Yellow
         }
     }
-    Write-Host "    Hinweis: Bei aktiviertem HTTPS zusaetzlich den HTTPS-Port freigeben." -ForegroundColor Gray
+
+    # Der HTTPS-Port wird mit freigegeben, auch wenn HTTPS noch aus ist.
+    # Sonst faellt beim spaeteren Einschalten im Dashboard niemandem auf,
+    # warum die Displays und das Buchungsportal ploetzlich nicht mehr
+    # herankommen.
+    Write-Host "    Wird der Port spaeter im Dashboard geaendert, muss die Regel" -ForegroundColor Gray
+    Write-Host "    von Hand nachgezogen werden. Das Dashboard weist darauf hin." -ForegroundColor Gray
 }
 
 # -------------------------------------------------------------------- Dienst
@@ -261,11 +281,11 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Programm:  $InstallDir" -ForegroundColor Cyan
 Write-Host "  Daten:     $dataBase\data" -ForegroundColor Cyan
-Write-Host "  Dashboard: http://localhost:$HTTP_PORT" -ForegroundColor Cyan
+Write-Host "  Dashboard: http://localhost:$HttpPort" -ForegroundColor Cyan
 Write-Host "  Dienst:    $SERVICE_NAME" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Naechste Schritte:" -ForegroundColor White
-Write-Host "  1. http://localhost:$HTTP_PORT im Browser oeffnen (admin / admin)" -ForegroundColor Gray
+Write-Host "  1. http://localhost:$HttpPort im Browser oeffnen (admin / admin)" -ForegroundColor Gray
 Write-Host "  2. Kennwort unter Benutzer aendern" -ForegroundColor Gray
 Write-Host "  3. Unter Einstellungen den Kalender-Anbieter einrichten" -ForegroundColor Gray
 Write-Host "  4. Raeume importieren und Geraete zuweisen" -ForegroundColor Gray
