@@ -163,12 +163,65 @@ raum-terminals.exe run        # Im Vordergrund starten (Debugging)
 
 ## Gerät flashen (TRMNL e1001)
 
+Es gibt zwei Wege. Welcher der richtige ist, hängt davon ab, welche Firmware
+auf das Schild soll.
+
+### Mit der Firmware von Raum-Terminals
+
+Für Geräte, die mit unserer eigenen Firmware laufen sollen. Es wird weder eine
+Entwicklungsumgebung noch ein Administratorkonto gebraucht, der serielle
+Zugriff geht mit normalen Benutzerrechten.
+
+1. `merged_firmware.bin` in einen Ordner legen, etwa vom USB-Stick oder aus
+   dem Netzlaufwerk
+2. Eine PowerShell in diesem Ordner öffnen
+3. Schild per USB-C anstecken
+4. Diesen Befehl ausführen:
+
+```powershell
+irm https://raw.githubusercontent.com/domall-it/raum-terminals-releases/master/flash.ps1 | iex
+```
+
+Das Skript sucht die Firmwaredatei im aktuellen Ordner, holt beim ersten Mal
+das Flash-Werkzeug (rund 63 MB, danach liegt es bereit), findet den Anschluss
+und fragt vor dem Schreiben nach.
+
+Ohne Rückfrage, etwa für mehrere Geräte hintereinander:
+
+```powershell
+.\flash.ps1 -Firmware D:\firmware\merged_firmware.bin -Port COM5 -Ja
+```
+
+Fängt sich ein Gerät nicht mehr, hilft meist `-Erase`. Damit wird der
+Speicher vorher vollständig gelöscht.
+
+**Die Firmwaredatei liegt bewusst nicht in diesem Repository.** Sie wird über
+den internen Weg verteilt, solange die Quelltextfrage der Firmware nicht
+abschließend geklärt ist.
+
+### Mit der BYOS-Firmware von TRMNL
+
+Der bisherige Weg, ohne eigene Firmwaredatei.
+
 1. TRMNL e1001 unter **https://trmnl.com/flash** mit der aktuellen BYOS-Firmware flashen
 2. Gerät mit WLAN verbinden
 3. Im Gerät-Setup als Server-URL eintragen: `http://<Server-IP>:2300`
 4. Das Gerät registriert sich automatisch und erscheint unter **Geräte** im Dashboard
 
-Die passende Adresse steht im Dashboard unter *Server* im Abschnitt „Erreichbar unter" und lässt sich dort mit einem Klick kopieren.
+### Nach dem Flashen
+
+Das Schild startet neu und zeigt den Einrichtungsbildschirm mit Serveradresse
+und MAC. Die passende Adresse steht im Dashboard unter *Server* im Abschnitt
+„Erreichbar unter" und lässt sich dort mit einem Klick kopieren.
+
+### Wenn es klemmt
+
+| Sie sehen | Das hilft |
+|---|---|
+| Kein serieller Anschluss gefunden | Ein reines Ladekabel überträgt keine Daten. Anderes USB-C-Kabel nehmen und möglichst direkt am Rechner anstecken, nicht über einen Hub ohne eigene Stromversorgung. |
+| Der Anschluss ist belegt | Ein offener serieller Monitor hält ihn. Fenster schließen. |
+| Das Gerät meldet sich gar nicht | In den Download-Modus bringen: BOOT gedrückt halten, RESET kurz drücken, BOOT loslassen. |
+| `esptool.exe` fehlt nach dem Entpacken | Das macht in aller Regel ein Virenschutz. Den genannten Ordner unter `%LOCALAPPDATA%\Raum-Terminals` ausnehmen. |
 
 ---
 
