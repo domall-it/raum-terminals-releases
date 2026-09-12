@@ -20,6 +20,14 @@ param(
 
 $SERVICE_NAME = "RaumTerminals"
 $EXE_NAME     = "raum-terminals.exe"
+$DEFAULT_DIR  = "C:\Program Files\Raum-Terminals"
+
+# Wird das Skript mit "irm <url> | iex" gestartet, laeuft es nicht aus einer
+# Datei. $PSScriptRoot ist dann leer, und jedes Join-Path damit bricht mit
+# einer Bindungsfehlermeldung ab, die niemandem sagt, was los ist.
+# $ScriptDir ist entweder ein brauchbares Verzeichnis oder leer, und jede
+# Verwendung prueft das.
+$ScriptDir = $PSScriptRoot
 $HTTP_PORT    = 2300
 $REG_UNINST   = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RaumTerminals"
 $DATA_DIR     = Join-Path $env:ProgramData "Raum-Terminals"
@@ -39,9 +47,14 @@ if ($InstallDir -eq "") {
         $exeFromSvc = ($svcInfo.PathName -replace '\s+run\s*$', '').Trim('"')
         if ($exeFromSvc) { $InstallDir = Split-Path -Parent $exeFromSvc }
     }
-    if ($InstallDir -eq "") {
-        $InstallDir = $PSScriptRoot
+    if ($InstallDir -eq "" -and $ScriptDir) {
+        $InstallDir = $ScriptDir
         Write-Host "Kein Dienst gefunden, es wird der Ordner dieses Skripts verwendet." -ForegroundColor Gray
+    }
+    if ($InstallDir -eq "") {
+        # Ueber "irm | iex" gestartet, es gibt keinen Skriptordner.
+        $InstallDir = $DEFAULT_DIR
+        Write-Host "Kein Dienst und kein Skriptordner, es wird die Vorgabe verwendet: $DEFAULT_DIR" -ForegroundColor Gray
     }
 }
 Write-Host "Installationsverzeichnis: $InstallDir" -ForegroundColor Gray

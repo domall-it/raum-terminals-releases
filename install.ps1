@@ -38,6 +38,13 @@ $DATA_DIR    = Join-Path $env:ProgramData  "Raum-Terminals"
 # Deinstallation spaeter ohne erneuten Download funktionieren.
 $HELPER_SCRIPTS = @("uninstall.ps1", "update.ps1")
 
+# Wird das Skript mit "irm <url> | iex" gestartet, laeuft es nicht aus einer
+# Datei. $PSScriptRoot ist dann leer, und jedes Join-Path damit bricht mit
+# einer Bindungsfehlermeldung ab, die niemandem sagt, was los ist.
+# $ScriptDir ist entweder ein brauchbares Verzeichnis oder leer, und jede
+# Verwendung prueft das.
+$ScriptDir = $PSScriptRoot
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Raum-Terminals Server - Installation  " -ForegroundColor Cyan
@@ -140,9 +147,12 @@ Write-Host "    Gespeichert: $exePath" -ForegroundColor Green
 Write-Host "[5/7] Verwaltungsskripte werden bereitgestellt..." -ForegroundColor Yellow
 foreach ($helper in $HELPER_SCRIPTS) {
     $target = Join-Path $InstallDir $helper
-    $local  = Join-Path $PSScriptRoot $helper
+    # Leer, wenn ueber "irm | iex" gestartet. Dann gibt es keinen Ordner
+    # daneben, und die Skripte werden aus dem Repo geholt.
+    $local  = ""
+    if ($ScriptDir) { $local = Join-Path $ScriptDir $helper }
     $copied = $false
-    if (Test-Path $local) {
+    if ($local -and (Test-Path $local)) {
         if ((Resolve-Path $local).Path -ne $target) {
             Copy-Item -Path $local -Destination $target -Force
             $copied = $true

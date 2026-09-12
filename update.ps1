@@ -27,6 +27,14 @@ $GITHUB_REPO  = "domall-it/raum-terminals-releases"
 $SERVICE_NAME = "RaumTerminals"
 $EXE_NAME     = "raum-terminals.exe"
 $REG_UNINST   = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RaumTerminals"
+$DEFAULT_DIR  = "C:\Program Files\Raum-Terminals"
+
+# Wird das Skript mit "irm <url> | iex" gestartet, laeuft es nicht aus einer
+# Datei. $PSScriptRoot ist dann leer, und jedes Join-Path damit bricht mit
+# einer Bindungsfehlermeldung ab, die niemandem sagt, was los ist.
+# $ScriptDir ist entweder ein brauchbares Verzeichnis oder leer, und jede
+# Verwendung prueft das.
+$ScriptDir = $PSScriptRoot
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -43,12 +51,29 @@ if ($InstallDir -eq "") {
         $exeFromSvc = ($svcInfo.PathName -replace '\s+run\s*$', '').Trim('"')
         if ($exeFromSvc) { $InstallDir = Split-Path -Parent $exeFromSvc }
     }
-    if ($InstallDir -eq "") { $InstallDir = $PSScriptRoot }
+    if ($InstallDir -eq "" -and $ScriptDir) { $InstallDir = $ScriptDir }
+    if ($InstallDir -eq "") {
+        # Kein Dienst, kein Skriptordner: ueber "irm | iex" gestartet, ohne
+        # dass jemals installiert wurde. Statt mit einer Bindungsfehlermeldung
+        # abzubrechen, wird die Vorgabe geprueft und sonst klar gesagt, was zu
+        # tun ist.
+        $InstallDir = $DEFAULT_DIR
+        Write-Host "Kein Dienst gefunden, es wird die Vorgabe geprueft: $DEFAULT_DIR" -ForegroundColor Gray
+    }
 }
 
 $exePath = Join-Path $InstallDir $EXE_NAME
 if (-not (Test-Path $exePath)) {
-    Write-Error "$exePath nicht gefunden. Bitte zuerst install.ps1 ausfuehren."
+    Write-Host ""
+    Write-Host "$exePath nicht gefunden." -ForegroundColor Red
+    Write-Host "Es ist keine Installation vorhanden, die sich aktualisieren liesse." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Erstinstallation:" -ForegroundColor White
+    Write-Host "  irm https://raw.githubusercontent.com/$GITHUB_REPO/master/install.ps1 | iex" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Liegt die Installation woanders, den Pfad angeben:" -ForegroundColor White
+    Write-Host "  .\update.ps1 -InstallDir 'D:\Raum-Terminals'" -ForegroundColor Cyan
+    Write-Host ""
     exit 1
 }
 Write-Host "Installationsverzeichnis: $InstallDir" -ForegroundColor Gray
