@@ -16,6 +16,12 @@
         .\flash.ps1 -Firmware D:\firmware\merged_firmware.bin -Port COM5
             Laeuft ohne Rueckfrage
 
+        .\flash.ps1 -Firmware \\server\freigabe\merged_firmware.bin
+            Holt die Datei von einer Netzwerkfreigabe
+
+        .\flash.ps1 -Firmware https://intern.example/merged_firmware.bin
+            Holt die Datei von einer internen Adresse
+
         .\flash.ps1 -Erase
             Loescht den Flash vollstaendig, bevor geschrieben wird.
             Nur noetig, wenn ein Geraet sich sonst nicht faengt.
@@ -68,16 +74,55 @@ if ($Firmware -eq "") {
         Write-Host "    Die Datei entsteht beim Bauen der Firmware unter" -ForegroundColor Gray
         Write-Host "    .pio\build\seeed_reTerminal_E1001\$FW_NAME" -ForegroundColor Gray
         Write-Host ""
-        $Firmware = (Read-Host "Pfad zur $FW_NAME").Trim().Trim('"')
+        Write-Host "    Moeglich ist ein Pfad, eine Netzwerkfreigabe oder eine Adresse:" -ForegroundColor Gray
+        Write-Host "      D:\firmware\$FW_NAME" -ForegroundColor Gray
+        Write-Host "      \\server\freigabe\$FW_NAME" -ForegroundColor Gray
+        Write-Host "      https://intern.example/$FW_NAME" -ForegroundColor Gray
+        Write-Host ""
+        $Firmware = (Read-Host "Quelle").Trim().Trim('"')
     }
 }
 
-if ($Firmware -eq "" -or -not (Test-Path $Firmware)) {
+if ($Firmware -eq "") {
     Write-Host ""
-    Write-Host "Firmwaredatei nicht gefunden: $Firmware" -ForegroundColor Red
+    Write-Host "Keine Firmwaredatei angegeben." -ForegroundColor Red
     exit 1
 }
-$Firmware = (Resolve-Path $Firmware).Path
+
+# Eine Adresse wird geladen, alles andere als Pfad genommen. Netzwerkpfade
+# der Form \\server\freigabe\datei.bin gehen direkt, dafuer ist nichts zu tun.
+if ($Firmware -match '^https?://') {
+    $quelle = $Firmware
+    $ablage = Join-Path $env:LOCALAPPDATA "Raum-Terminals\firmware"
+    New-Item -ItemType Directory -Path $ablage -Force | Out-Null
+    $Firmware = Join-Path $ablage $FW_NAME
+    try {
+        Write-Host "    Wird geladen von $quelle" -ForegroundColor Gray
+        $alt = $ProgressPreference
+        $ProgressPreference = "SilentlyContinue"
+        Invoke-WebRequest -Uri $quelle -OutFile $Firmware -UseBasicParsing
+        $ProgressPreference = $alt
+    } catch {
+        Write-Host ""
+        Write-Host "Die Firmware konnte nicht geladen werden:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
+}
+
+if (-not (Test-Path $Firmware)) {
+    Write-Host ""
+    Write-Host "Firmwaredatei nicht gefunden: $Firmware" -ForegroundColor Red
+    if ($Firmware -like '\\*') {
+        Write-Host "Die Freigabe ist von diesem Rechner aus nicht erreichbar." -ForegroundColor Yellow
+    }
+    exit 1
+}
+# ProviderPath und nicht Path: Bei einer Netzwerkfreigabe liefert
+# Resolve-Path sonst einen Pfad mit Provider-Praefix der Form
+# Microsoft.PowerShell.Core\FileSystem::\\server\..., und die
+# .NET-Methoden weiter unten kommen damit nicht zurecht.
+$Firmware = (Resolve-Path $Firmware).ProviderPath
 
 # Der Aufbau wird geprueft, nicht die Groesse. Ein zusammengefuehrtes Abbild
 # traegt drei Merkmale an festen Stellen:
