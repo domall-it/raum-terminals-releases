@@ -3,7 +3,9 @@
     Raum-Terminals Server - Update
 
     Ermittelt das Installationsverzeichnis selbst aus dem Windows-Dienst.
-    Datenbank und Lizenz werden nicht angefasst.
+    Vor dem Austausch wird die Datenbank gesichert (Ordner backup neben dem
+    Ordner data, die letzten 5 bleiben). Lizenz und Einstellungen werden
+    nicht angefasst.
 
     Beispiele:
         .\update.ps1
@@ -78,6 +80,49 @@ if (-not (Test-Path $exePath)) {
 }
 Write-Host "Installationsverzeichnis: $InstallDir" -ForegroundColor Gray
 
+# ------------------------------------------------------- Datenbank finden
+# Dieselbe Reihenfolge wie der Server (cmd/server/paths.go):
+#   1. RAUMTERMINALS_DATA, falls fuer den Dienst oder die Maschine gesetzt
+#   2. das Programmverzeichnis, wenn dort schon eine Datenbank liegt
+#      (Bestandsinstallationen, etwa C:\raum-terminals)
+#   3. %ProgramData%\Raum-Terminals
+function Get-DataDir([string]$installDir) {
+    $svcEnv = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\$SERVICE_NAME" -Name Environment -ErrorAction SilentlyContinue).Environment
+    foreach ($line in @($svcEnv)) {
+        if ($line -match '^RAUMTERMINALS_DATA=(.+)$') { return $Matches[1] }
+    }
+    $machineEnv = [Environment]::GetEnvironmentVariable('RAUMTERMINALS_DATA', 'Machine')
+    if ($machineEnv) { return $machineEnv }
+    if (Test-Path (Join-Path $installDir 'data\raum-terminals.db')) { return $installDir }
+    return (Join-Path $env:ProgramData 'Raum-Terminals')
+}
+
+# Sichert die Datenbank samt WAL-Dateien. Ohne -wal koennten die letzten
+# Schreibvorgaenge fehlen, wenn der Dienst hart beendet wurde. Gibt den Pfad
+# der Sicherung zurueck oder "" wenn es keine Datenbank gibt.
+function Backup-Database([string]$dataDir, [string]$label) {
+    $db = Join-Path $dataDir 'data\raum-terminals.db'
+    if (-not (Test-Path $db)) { return "" }
+    $backupDir = Join-Path $dataDir 'backup'
+    New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $safeLabel = ($label -replace '[^0-9A-Za-z\.\-]', '')
+    if (-not $safeLabel) { $safeLabel = 'unbekannt' }
+    $target = Join-Path $backupDir "raum-terminals-$safeLabel-$stamp.db"
+    Copy-Item -Path $db -Destination $target -Force
+    foreach ($ext in '-wal', '-shm') {
+        if (Test-Path "$db$ext") { Copy-Item -Path "$db$ext" -Destination "$target$ext" -Force }
+    }
+    # Nur die letzten 5 Sicherungen behalten.
+    Get-ChildItem -Path $backupDir -Filter 'raum-terminals-*.db' |
+        Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 |
+        ForEach-Object {
+            Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            Remove-Item "$($_.FullName)-wal", "$($_.FullName)-shm" -Force -ErrorAction SilentlyContinue
+        }
+    return $target
+}
+
 # Installierte Version aus der Programmliste, falls dort registriert.
 $currentVersion = ""
 if (Test-Path $REG_UNINST) {
@@ -86,7 +131,7 @@ if (Test-Path $REG_UNINST) {
 if ($currentVersion) { Write-Host "Installierte Version:     v$currentVersion" -ForegroundColor Gray }
 
 Write-Host ""
-Write-Host "[1/4] Verfuegbare Version wird geprueft..." -ForegroundColor Yellow
+Write-Host "[1/5] Verfuegbare Version wird geprueft..." -ForegroundColor Yellow
 if ($Version -eq "") {
     $apiUrl = "https://api.github.com/repos/$GITHUB_REPO/releases/latest"
 } else {
@@ -110,7 +155,7 @@ if ($currentVersion -and ($newVersion -replace '^v','') -eq $currentVersion -and
     exit 0
 }
 
-Write-Host "[2/4] Dienst wird gestoppt..." -ForegroundColor Yellow
+Write-Host "[2/5] Dienst wird gestoppt..." -ForegroundColor Yellow
 $svc = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -eq "Running") {
     Stop-Service -Name $SERVICE_NAME -Force
@@ -121,7 +166,26 @@ Get-Process -Name ($EXE_NAME -replace '\.exe$','') -ErrorAction SilentlyContinue
     Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
-Write-Host "[3/4] Neue Version wird heruntergeladen..." -ForegroundColor Yellow
+Write-Host "[3/5] Datenbank wird gesichert..." -ForegroundColor Yellow
+try {
+    $dataDir = Get-DataDir $InstallDir
+    $backupLabel = if ($currentVersion) { "v$currentVersion" } else { "vorher" }
+    $backupPath = Backup-Database $dataDir $backupLabel
+    if ($backupPath) {
+        Write-Host "    $backupPath" -ForegroundColor Green
+    } else {
+        Write-Host "    Keine Datenbank unter $dataDir gefunden, nichts zu sichern." -ForegroundColor Gray
+    }
+} catch {
+    # Ohne Sicherung wird nicht aktualisiert. Der bisherige Stand laeuft
+    # weiter, damit die Raeume nicht ausfallen.
+    Write-Host "FEHLER: Datenbank konnte nicht gesichert werden: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Das Update wird abgebrochen, die bisherige Version wird wieder gestartet." -ForegroundColor Yellow
+    Start-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
+    exit 1
+}
+
+Write-Host "[4/5] Neue Version wird heruntergeladen..." -ForegroundColor Yellow
 $tmpPath = "$exePath.new"
 Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmpPath -UseBasicParsing
 Copy-Item -Path $exePath -Destination "$exePath.bak" -Force
@@ -129,7 +193,7 @@ Remove-Item -Path $exePath -Force
 Move-Item -Path $tmpPath -Destination $exePath
 Write-Host "    $newVersion eingerichtet." -ForegroundColor Green
 
-Write-Host "[4/4] Dienst wird gestartet..." -ForegroundColor Yellow
+Write-Host "[5/5] Dienst wird gestartet..." -ForegroundColor Yellow
 Start-Service -Name $SERVICE_NAME
 Start-Sleep -Seconds 3
 
@@ -148,6 +212,7 @@ if ($svc -and $svc.Status -eq "Running") {
     Write-Host ""
     Write-Host "  Hinweis: Nach einem Update kann eine erneute Anmeldung im" -ForegroundColor Gray
     Write-Host "  Dashboard noetig sein. Datenbank und Lizenz bleiben erhalten." -ForegroundColor Gray
+    if ($backupPath) { Write-Host "  Sicherung der Datenbank: $backupPath" -ForegroundColor Gray }
     Write-Host ""
 } else {
     # Startet der Dienst nicht, wird die vorherige Programmdatei
@@ -159,6 +224,7 @@ if ($svc -and $svc.Status -eq "Running") {
         Move-Item -Path "$exePath.bak" -Destination $exePath -Force
         Start-Service -Name $SERVICE_NAME
         Write-Host "Vorherige Version wiederhergestellt und gestartet." -ForegroundColor Yellow
+        if ($backupPath) { Write-Host "Die Datenbank vor dem Update liegt unter $backupPath" -ForegroundColor Gray }
     } else {
         Write-Host "Keine Sicherung gefunden, bitte install.ps1 erneut ausfuehren." -ForegroundColor Red
     }

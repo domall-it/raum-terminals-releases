@@ -86,7 +86,11 @@ powershell.exe -ExecutionPolicy Bypass -File .\update.ps1 -Version "v1.4.0"
 
 Das Skript ermittelt das Installationsverzeichnis selbst aus dem Windows-Dienst, ein Pfad muss also nicht angegeben werden. Es stoppt den Dienst, tauscht die Programmdatei und startet neu. Lässt sich der Dienst mit der neuen Version nicht starten, wird automatisch die vorherige wiederhergestellt.
 
-Datenbank und Lizenzdatei bleiben unberührt. Nach einem Update kann eine erneute Anmeldung im Dashboard nötig sein.
+Vor dem Austausch sichert das Skript die Datenbank, bei gestopptem Dienst und samt WAL-Dateien, in den Ordner `backup` neben dem Ordner `data` (zum Beispiel `C:\ProgramData\Raum-Terminals\backup\raum-terminals-v1.8.0-20260926-215058.db`). Die letzten fünf Sicherungen bleiben erhalten. Gelingt die Sicherung nicht, bricht das Update ab und die bisherige Version läuft weiter.
+
+Lizenzdatei und Einstellungen bleiben unberührt. Nach einem Update kann eine erneute Anmeldung im Dashboard nötig sein.
+
+**Datenbank zurückholen:** Dienst stoppen (`sc stop RaumTerminals`), die gewünschte Sicherung als `data\raum-terminals.db` zurückkopieren (die zugehörige `-wal`-Datei, falls vorhanden, als `raum-terminals.db-wal`), Dienst starten. Passt die Datenbank zu einer älteren Version, vorher mit `-Version` auf diese wechseln.
 
 ### Manuelles Update
 
