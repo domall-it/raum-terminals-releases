@@ -13,7 +13,7 @@
   - **Exchange Online / Microsoft 365** über die Microsoft Graph API (App-Registrierung in Microsoft Entra, keine Zusatzlizenz erforderlich)
   - **Exchange on-premises** 2016 oder neuer mit EWS-Zugang
 - Raumpostfächer (Room Mailboxes) für die anzuzeigenden Räume
-- TRMNL e1001 E-Ink Display (BYOS-Modus)
+- E-Ink-Display reTerminal E1001 (Seeed Studio) mit der Firmware von Raum-Terminals
 - Netzwerkzugang vom Display-Gerät zum Server
 
 ---
@@ -126,7 +126,7 @@ Die Deinstallation lässt sich auch über *Apps & Features* in den Windows-Einst
    - *Exchange Online / Microsoft 365*: Tenant-ID, Client-ID und Client-Secret der App-Registrierung
    - *Exchange on-premises*: EWS-URL, Dienstkonto und Passwort
 3. **Räume**: Räume über die Erkennung importieren oder manuell mit Postfachadresse anlegen
-4. **Geräte**: TRMNL e1001 flashen (BYOS-Firmware: https://trmnl.com/flash), Server-URL eintragen
+4. **Geräte**: Display mit der Firmware von Raum-Terminals flashen (siehe unten, bei uns bezogene sind fertig aufgespielt), Server-URL eintragen
 5. **Geräte**: Registriertes Gerät einem Raum zuweisen
 
 Die vollständige Anleitung zur Einrichtung in Microsoft Entra (App-Registrierung, Anwendungsberechtigungen, Administratorzustimmung) steht im Handbuch direkt im Dashboard.
@@ -139,7 +139,7 @@ Die vollständige Anleitung zur Einrichtung in Microsoft Entra (App-Registrierun
 |---|---|
 | **Kalender** | Exchange Online über Graph API und Exchange on-premises über EWS, automatische Synchronisierung der Raumbelegung |
 | **Räume** | Beliebig viele Räume, Standorte und Gruppen, gemischter Betrieb mehrerer Anbieter |
-| **Geräte** | TRMNL e1001 (BYOS-Protokoll), Akku-Anzeige, WLAN-Signal, Firmware |
+| **Geräte** | reTerminal E1001, Akku-Anzeige, WLAN-Signal, Firmware |
 | **Energiesparen** | Dynamische Abrufintervalle je nach Raumstatus, Bürozeiten, Tiefschlaf |
 | **Buchungsportal** | Spontanbuchung direkt am Gerät (QR-Code), Personensuche im Adressbuch |
 | **HTTPS** | Eigenes Zertifikat als PEM oder PFX, Dashboard und Buchungsportal verschlüsselt |
@@ -165,14 +165,9 @@ raum-terminals.exe run        # Im Vordergrund starten (Debugging)
 
 ---
 
-## Gerät flashen (TRMNL e1001)
+## Gerät flashen (reTerminal E1001)
 
-Es gibt zwei Wege. Welcher der richtige ist, hängt davon ab, welche Firmware
-auf das Schild soll.
-
-### Mit der Firmware von Raum-Terminals
-
-Für Geräte, die mit unserer eigenen Firmware laufen sollen. Es wird weder eine
+Bei uns bezogene Displays sind fertig aufgespielt. Für alle anderen wird weder eine
 Entwicklungsumgebung noch ein Administratorkonto gebraucht, der serielle
 Zugriff geht mit normalen Benutzerrechten.
 
@@ -199,18 +194,12 @@ Ohne Rückfrage, etwa für mehrere Geräte hintereinander:
 Fängt sich ein Gerät nicht mehr, hilft meist `-Erase`. Damit wird der
 Speicher vorher vollständig gelöscht.
 
+Die Firmware von Raum-Terminals ist eine Weiterentwicklung der quelloffenen
+TRMNL-Firmware und steht wie diese unter der GNU GPL 3.0.
+
 **Die Firmwaredatei liegt bewusst nicht in diesem Repository.** Sie wird über
 den internen Weg verteilt, solange die Quelltextfrage der Firmware nicht
 abschließend geklärt ist.
-
-### Mit der BYOS-Firmware von TRMNL
-
-Der bisherige Weg, ohne eigene Firmwaredatei.
-
-1. TRMNL e1001 unter **https://trmnl.com/flash** mit der aktuellen BYOS-Firmware flashen
-2. Gerät mit WLAN verbinden
-3. Im Gerät-Setup als Server-URL eintragen: `http://<Server-IP>:2300`
-4. Das Gerät registriert sich automatisch und erscheint unter **Geräte** im Dashboard
 
 ### Nach dem Flashen
 
@@ -236,7 +225,7 @@ Raum-Terminals kann **30 Tage kostenlos** mit vollem Funktionsumfang getestet we
 | | Testversion | Vollversion |
 |---|---|---|
 | Laufzeit | 30 Tage | Unbefristet (Kauflizenz) |
-| Geräte | 1 TRMNL e1001 | Je nach Anzahl der Gerätelizenzen |
+| Geräte | 1 Display | Je nach Anzahl der Gerätelizenzen |
 | Räume | Unbegrenzt | Unbegrenzt |
 | Funktionen | Vollständig | Vollständig |
 | Updates | Enthalten | Über optionale Software-Wartung |
